@@ -1,5 +1,5 @@
-
 import pyxel
+import random
 
 pyxel.init(64, 32)
 
@@ -160,6 +160,7 @@ def decode(opcode):
             return "LD Vx, [I]"
 
 def execute(s):
+    print("Did ",s)
     if s == "CLS":
         chip8["displayMemory"] = [0]*(64*32)
     elif s == "RET":
@@ -219,7 +220,7 @@ def execute(s):
         else:
             chip8["V"][15] = 0
         chip8["V"][Vx] = add % 256
-    elif s == "ADD Vx, Vy" :
+    elif s == "SUB Vx, Vy" :
         Vx = arg_x
         Vy = arg_y
         sub = Vx - Vy
@@ -228,6 +229,49 @@ def execute(s):
         else:
             chip8["V"][15] = 0
         chip8["V"][Vx] = sub % 256
+    elif s == "SHR Vx, Vy":
+        Vx = arg_x
+        if Vx & 0x1 == 1:
+            chip8["V"][15] = 1
+        else:
+            chip8["V"][15] = 0
+        chip8["V"][Vx] = chip8["V"][Vx] >> 1
+    elif s == "SUBN Vx, Vy" :
+        Vx = arg_x
+        Vy = arg_y
+        val = Vy - Vx
+        if val>0:
+            chip8["V"][15] = 1
+        else:
+            chip8["V"][15] = 0
+        chip8["V"][Vx] = val
+    elif s == "SHL Vx, Vy": 
+        Vx = arg_x
+        if Vx & 0x80 == 1:
+            chip8["V"][15] = 1
+        else:
+            chip8["V"][15] = 0
+        chip8["V"][Vx] = chip8["V"][Vx] << 1
+    elif s == "SNE Vx, Vy":
+        Vx = arg_x
+        Vy = arg_y
+        if Vx != Vy:
+            chip8["PC"] += 2
+    elif s == "LD I, addr":
+        addr = arg_xnnn
+        chip8["I"] = addr
+    elif s == "JP V0, addr":
+        addr = arg_xnnn
+        chip8["PC"] = addr + chip8["V"][0]
+    elif s == "RND Vx, byte":
+        Vx = arg_x
+        byte = arg_xxnn
+        x = hex(random.randint(0,255))
+        chip8["V"][Vx] = x & byte
+    elif s == "DRW Vx, Vy, nibble":
+        pass
+    
+
 def update():
     running = True
     k = fetch()
